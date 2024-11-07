@@ -61,7 +61,7 @@ def reset_topics_in_db(topic_id):
 
 
 # Funzione per gestire i comandi /odg
-async def handle_odg(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+async def handle_odg(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     try:
         # Verifica se 'message_thread_id' esiste, altrimenti usa 'chat.id'
@@ -70,7 +70,6 @@ async def handle_odg(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
         # Logga l'errore o gestisci il caso in cui 'update.message' sia None
         print("Errore: 'update.message' è None")
         await update.message.reply_text("Errore con l'id della chat attuale")
-        return
 
     author = update.message.from_user.full_name
 
@@ -92,12 +91,23 @@ async def handle_odg(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
         await update.message.reply_text(f"Aggiunto all'odg: {topic_text}")
 
 
+async def get_chat_id_topic(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    chat_id = update.message.chat.id
+    topic_id = update.message.message_thread_id
+
+    if topic_id is None:
+        update.message.reply_test(f"Id della chat: {chat_id}")
+    else:
+        update.message.reply_test(f"Id della chat: {chat_id}, id del topic: {topic_id}")
+
+
 if __name__ == "__main__":
     def main():
         create_table()
 
         application = Application.builder().token(BOT_TOKEN).build()
         application.add_handler(CommandHandler("odg", handle_odg))
+        application.add_handler(CommandHandler("chatid", get_chat_id_topic))
         application.run_polling()
 
     main()
