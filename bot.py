@@ -96,9 +96,9 @@ async def get_chat_id_topic(update: Update, context: ContextTypes.DEFAULT_TYPE):
     topic_id = update.message.message_thread_id
 
     if topic_id is None:
-        update.message.reply_test(f"Id della chat: {chat_id}")
+        update.message.reply_text(f"Id della chat: {chat_id}")
     else:
-        update.message.reply_test(f"Id della chat: {chat_id}, id del topic: {topic_id}")
+        update.message.reply_text(f"Id della chat: {chat_id}, id del topic: {topic_id}")
 
 
 if __name__ == "__main__":
