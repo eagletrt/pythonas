@@ -7,6 +7,7 @@ from collections import defaultdict
 DATABASE_URL = os.getenv("DATABASE_URL")
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
+
 def create_table():
     conn = psycopg2.connect(DATABASE_URL)
     cursor = conn.cursor()
@@ -61,7 +62,16 @@ def reset_topics_in_db(topic_id):
 
 # Funzione per gestire i comandi /odg
 async def handle_odg(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    topic_id = update.message.message_thread_id if update.message.message_thread_id else update.message.chat.id
+
+    try:
+        # Verifica se 'message_thread_id' esiste, altrimenti usa 'chat.id'
+        topic_id = update.message.message_thread_id if update.message.message_thread_id else update.message.chat.id
+    except AttributeError:
+        # Logga l'errore o gestisci il caso in cui 'update.message' sia None
+        print("Errore: 'update.message' è None")
+        await update.message.reply_text("Errore con l'id della chat attuale")
+        return
+
     author = update.message.from_user.full_name
 
     if len(context.args) == 0:
