@@ -3,9 +3,15 @@ import psycopg2
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
 from collections import defaultdict
+import requests
+import json
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 BOT_TOKEN = os.getenv("BOT_TOKEN")
+
+
+# constant for the deep linking
+NOME_COGNOME = "nome.cognome"
 
 
 def create_table():
@@ -23,6 +29,46 @@ def create_table():
     conn.commit()
     cursor.close()
     conn.close()
+
+
+def create_table_ore():
+    conn = psycopg2.connect(DATABASE_URL)
+    cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS ore (
+            id SERIAL PRIMARY KEY,
+            user_id BIGINT,
+            user_mail TEXT,
+            timestamp TIMESTAMPTZ DEFAULT NOW()
+        )
+    """)
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+
+def add_user_to_db(user_id, user_mail):
+    conn = psycopg2.connect(DATABASE_URL)
+    cursor = conn.cursor()
+    cursor.execute("""
+        INSERT INTO ore (user_id, user_mail)
+        VALUES (%s, %s)
+    """, (user_id, user_mail))
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+
+def get_mail_from_id_db(user_id):
+    conn = psycopg2.connect(DATABASE_URL)
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT user_mail FROM ore WHERE user_id = %s
+    """, (user_id,))
+    rows = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    return rows
 
 
 def add_topic_to_db(topic_id, author, topic_text):
@@ -101,13 +147,69 @@ async def get_chat_id_topic(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(f"Id della chat: {chat_id}, id del topic: {topic_id}")
 
 
+async def is_in_db(user_id):
+    conn = psycopg2.connect(DATABASE_URL)
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT user_mail FROM ore WHERE user_id = %s
+    """, (user_id,))
+    mail = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    if mail:
+        return True
+    else:
+        return False
+
+
+async def deep_linked_level_1(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
+    user_mail = ""
+    user_id = update.message.chat_id
+    if context.args:
+        user_mail = context.args[0]
+    else:
+        await update.message.reply_text("Attenzione: non sei autenticat*. Contatta lo staff IT")
+        return
+    add_user_to_db(user_id, user_mail)
+    await update.message.reply_text("Sei autenticat*!")
+
+
+async def ore(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = update.message.from_user.id
+    if is_in_db(user_id) is not True:
+        url = "https://api.eagletrt.it/api/v2/tecsLinkOre"
+        text = f"Clicca su <a href='{url}'>questo link</a> per le ore"
+        await update.message.reply_text(text)
+        return
+    email = get_mail_from_id_db(user_id) 
+    url = f"https://api.eagletrt.it/api/v2/oreLab?username={email}"
+
+    response = requests.get(url)
+
+    if response.status_code == 200:
+        data = response.json()
+        ore = data.get("ore")
+        if ore is None:
+            await update.message.reply_text("Errore, contatta lo staff IT.\n Codice errore: in ore function: ore is None")                
+            return
+        reply_ore = f"Mi risulta che finora tu abbia trascorso {ore} ore nel laboratorio di E-Agle TRT questo mese"
+        await update.message.reply_text(reply_ore)
+    else:
+        status_code = response.status_code
+        await update.message.reply_text(f"Errore, contatta lo staff IT.\n Codice errore: in ore function, response status code is {status_code}")
+
+
 if __name__ == "__main__":
     def main():
         create_table()
+        create_table_ore()
 
         application = Application.builder().token(BOT_TOKEN).build()
+        application.add_handler(CommandHandler("start", deep_linked_level_1, filters.Regex(NOME_COGNOME)))
         application.add_handler(CommandHandler("odg", handle_odg))
         application.add_handler(CommandHandler("chatid", get_chat_id_topic))
+        application.add_handler(CommandHandler("ore", get_ore))
         application.run_polling()
 
     main()
