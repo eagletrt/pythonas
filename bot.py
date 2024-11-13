@@ -209,7 +209,7 @@ if __name__ == "__main__":
         application.add_handler(CommandHandler("start", deep_linked_level_1, filters.Regex(NOME_COGNOME)))
         application.add_handler(CommandHandler("odg", handle_odg))
         application.add_handler(CommandHandler("chatid", get_chat_id_topic))
-        application.add_handler(CommandHandler("ore", get_ore))
+        application.add_handler(CommandHandler("ore", ore))
         application.run_polling()
 
     main()
