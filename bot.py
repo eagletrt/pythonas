@@ -177,7 +177,8 @@ async def deep_linked_level_1(update: Update, context: ContextTypes.DEFAULT_TYPE
 
 async def ore(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.message.from_user.id
-    if is_in_db(user_id) is not True:
+    in_db = is_in_db(user_id)
+    if in_db is not True:
         url = "https://api.eagletrt.it/api/v2/tecsLinkOre"
         text = f"Clicca su <a href='{url}'>questo link</a> per le ore"
         await update.message.reply_text(text)
