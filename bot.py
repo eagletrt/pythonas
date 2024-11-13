@@ -1,10 +1,11 @@
 import os
 import psycopg2
-from telegram import Update
+from telegram import Update, helpers
 from telegram.ext import Application, CommandHandler, ContextTypes
 from collections import defaultdict
 import requests
 import json
+from telegram.constants import ParseMode
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 BOT_TOKEN = os.getenv("BOT_TOKEN")
@@ -180,8 +181,9 @@ async def ore(update: Update, context: ContextTypes.DEFAULT_TYPE):
     in_db = is_in_db(user_id)
     if in_db is not True:
         url = "https://api.eagletrt.it/api/v2/tecsLinkOre"
+        deep_link = helpers.create_deep_linked_url(bot.username)
         text = f"Clicca su <a href='{url}'>questo link</a> per le ore"
-        await update.message.reply_text(text)
+        await update.message.reply_text(text, parse_mode=ParseMode.HTML)
         return
     email = get_mail_from_id_db(user_id) 
     url = f"https://api.eagletrt.it/api/v2/oreLab?username={email}"
