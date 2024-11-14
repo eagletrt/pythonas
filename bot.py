@@ -172,7 +172,7 @@ async def deep_linked_level_1(update: Update, context: ContextTypes.DEFAULT_TYPE
         user_mail = user_mail.replace("___", ".")
         await update.message.reply_text(f"Sei autenticat*. La tua email è {user_mail}@eagletrt.it!")
     else:
-        await update.message.reply_text("Attenzione: non sei autenticat*. Contatta lo staff IT")
+        await update.message.reply_text("Attenzione: utilizza il comando /ore altrimenti contatta lo staff IT")
         return
     add_user_to_db(user_id, user_mail)
 
