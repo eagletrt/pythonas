@@ -168,7 +168,7 @@ async def deep_linked_level_1(update: Update, context: ContextTypes.DEFAULT_TYPE
     user_mail = ""
     user_id = update.message.chat_id
     if context.args:
-        user_mail = f"{context.args}"
+        user_mail = f"{context.args[0]}"
         await update.message.reply_text(f"Sei autenticat*. La tua email è {user_mail}@eagletrt.it!")
     else:
         await update.message.reply_text("Attenzione: non sei autenticat*. Contatta lo staff IT")
