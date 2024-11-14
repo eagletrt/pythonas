@@ -69,7 +69,7 @@ def get_mail_from_id_db(user_id):
     rows = cursor.fetchall()
     cursor.close()
     conn.close()
-    return rows[-1]
+    return rows[-1][0]
 
 
 def add_topic_to_db(topic_id, author, topic_text):
