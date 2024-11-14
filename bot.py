@@ -194,7 +194,7 @@ async def ore(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if response.status_code == 200:
         data = response.json()
-        ore = data.get("ore")
+        ore = round(float(data.get("ore")), 2)
         if ore is None:
             await update.message.reply_text("Errore, contatta lo staff IT.\n Codice errore: in ore function: ore is None")                
             return
