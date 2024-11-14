@@ -168,7 +168,7 @@ async def deep_linked_level_1(update: Update, context: ContextTypes.DEFAULT_TYPE
     user_mail = ""
     user_id = update.message.chat_id
     if context.args:
-        user_mail = context.args[0]
+        user_mail = context.args
     else:
         await update.message.reply_text("Attenzione: non sei autenticat*. Contatta lo staff IT")
         return
@@ -204,6 +204,10 @@ async def ore(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(f"Errore, contatta lo staff IT.\n Codice errore: in ore function, response status code is {status_code}")
 
 
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+
+    await update.message.reply_text("Welcome to pyThonasBot!")
+
 if __name__ == "__main__":
     def main():
         create_table()
@@ -214,6 +218,7 @@ if __name__ == "__main__":
         application.add_handler(CommandHandler("odg", handle_odg))
         application.add_handler(CommandHandler("chatid", get_chat_id_topic))
         application.add_handler(CommandHandler("ore", ore))
+        application.add_handler(CommandHandler("start", start))
         application.run_polling()
 
     main()
