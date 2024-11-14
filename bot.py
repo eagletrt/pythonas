@@ -69,7 +69,7 @@ def get_mail_from_id_db(user_id):
     rows = cursor.fetchall()
     cursor.close()
     conn.close()
-    return rows
+    return rows[-1]
 
 
 def add_topic_to_db(topic_id, author, topic_text):
@@ -187,7 +187,7 @@ async def ore(update: Update, context: ContextTypes.DEFAULT_TYPE):
         text = f"Clicca su <a href='{url}'>questo link</a> per le ore"
         await update.message.reply_text(text, parse_mode=ParseMode.HTML)
         return
-    email = get_mail_from_id_db(user_id) 
+    email = str(get_mail_from_id_db(user_id))
     url = f"https://api.eagletrt.it/api/v2/oreLab?username={email}"
 
     response = requests.get(url)
