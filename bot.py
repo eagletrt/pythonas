@@ -195,17 +195,18 @@ async def ore(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if response.status_code == 200:
         data = response.json()
         ore = round(float(data.get("ore")), 2)
-        inlab = data.get("inlab")
+        inlab = str(data.get("inlab"))
         answer_text = ""
         if ore is None:
             await update.message.reply_text("Errore, contatta lo staff IT.\n Codice errore: in ore function: ore is None")                
             return
         if inlab == "false":
             answer_text = "Ciao! Non sei in lab 😿 \n"
-        else if inlab == "true":
+        elif inlab == "true":
             answer_text = "Ciao! Sei in lab 🐱\n"
-        else if inlab is None:
-            await update.message.reply_text("Errore, contatta lo staff IT.\n Codice errore: in ore function: inlab is None")
+        else:
+            await update.message.reply_text("Errore, contatta lo staff IT.\n Codice errore: in ore function: inlab isn't true or false")
+            print(inlab)
             return
         reply_ore = answer_text + f"Mi risulta che finora tu abbia trascorso {ore} ore nel laboratorio di E-Agle TRT questo mese"
         await update.message.reply_text(reply_ore)
