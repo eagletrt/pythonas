@@ -200,9 +200,9 @@ async def ore(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if ore is None:
             await update.message.reply_text("Errore, contatta lo staff IT.\n Codice errore: in ore function: ore is None")                
             return
-        if inlab is True:
+        if inlab is False:
             answer_text = "Ciao! Non sei in lab 😿 \n"
-        elif inlab is False:
+        elif inlab is True:
             answer_text = "Ciao! Sei in lab 🐱\n"
         else:
             await update.message.reply_text(f"Errore, contatta lo staff IT.\n Codice errore: in ore function: inlab is {inlab}")
