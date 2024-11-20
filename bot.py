@@ -204,7 +204,7 @@ async def ore(update: Update, context: ContextTypes.DEFAULT_TYPE):
             answer_text = "Ciao! Non sei in lab 😿 \n"
         else:
             answer_text = "Ciao! Sei in lab 🐱\n"
-        reply_ore = answer_text + "Mi risulta che finora tu abbia trascorso {ore} ore nel laboratorio di E-Agle TRT questo mese"
+        reply_ore = answer_text + f"Mi risulta che finora tu abbia trascorso {ore} ore nel laboratorio di E-Agle TRT questo mese"
         await update.message.reply_text(reply_ore)
     else:
         status_code = response.status_code
