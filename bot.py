@@ -1,110 +1,14 @@
-import os
-import psycopg2
+import database
 from telegram import Update, helpers
 from telegram.ext import Application, CommandHandler, ContextTypes
-from collections import defaultdict
 import requests
-import json
 from telegram.constants import ParseMode
+import os
 
-DATABASE_URL = os.getenv("DATABASE_URL")
 BOT_TOKEN = os.getenv("BOT_TOKEN")
-
 
 # constant for the deep linking
 NOME_COGNOME = "nome.cognome"
-
-
-def create_table():
-    conn = psycopg2.connect(DATABASE_URL)
-    cursor = conn.cursor()
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS odg_topics (
-            id SERIAL PRIMARY KEY,
-            topic_id BIGINT,
-            author TEXT,
-            topic_text TEXT,
-            timestamp TIMESTAMPTZ DEFAULT NOW()
-        )
-    """)
-    conn.commit()
-    cursor.close()
-    conn.close()
-
-
-def create_table_ore():
-    conn = psycopg2.connect(DATABASE_URL)
-    cursor = conn.cursor()
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS ore (
-            id SERIAL PRIMARY KEY,
-            user_id BIGINT,
-            user_mail TEXT,
-            timestamp TIMESTAMPTZ DEFAULT NOW()
-        )
-    """)
-    conn.commit()
-    cursor.close()
-    conn.close()
-
-
-def add_user_to_db(user_id, user_mail):
-    conn = psycopg2.connect(DATABASE_URL)
-    cursor = conn.cursor()
-    cursor.execute("""
-        INSERT INTO ore (user_id, user_mail)
-        VALUES (%s, %s)
-    """, (user_id, user_mail))
-    conn.commit()
-    cursor.close()
-    conn.close()
-
-
-def get_mail_from_id_db(user_id):
-    conn = psycopg2.connect(DATABASE_URL)
-    cursor = conn.cursor()
-    cursor.execute("""
-        SELECT user_mail FROM ore WHERE user_id = %s
-    """, (user_id,))
-    rows = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    return rows[-1][0]
-
-
-def add_topic_to_db(topic_id, author, topic_text):
-    conn = psycopg2.connect(DATABASE_URL)
-    cursor = conn.cursor()
-    cursor.execute("""
-        INSERT INTO odg_topics (topic_id, author, topic_text)
-        VALUES (%s, %s, %s)
-    """, (topic_id, author, topic_text))
-    conn.commit()
-    cursor.close()
-    conn.close()
-
-
-def get_topics_from_db(topic_id):
-    conn = psycopg2.connect(DATABASE_URL)
-    cursor = conn.cursor()
-    cursor.execute("""
-        SELECT topic_text, author FROM odg_topics WHERE topic_id = %s
-    """, (topic_id,))
-    rows = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    return rows
-
-
-def reset_topics_in_db(topic_id):
-    conn = psycopg2.connect(DATABASE_URL)
-    cursor = conn.cursor()
-    cursor.execute("""
-        DELETE FROM odg_topics WHERE topic_id = %s
-    """, (topic_id,))
-    conn.commit()
-    cursor.close()
-    conn.close()
 
 
 # Funzione per gestire i comandi /odg
@@ -121,7 +25,7 @@ async def handle_odg(update: Update, context: ContextTypes.DEFAULT_TYPE):
     author = update.message.from_user.full_name
 
     if len(context.args) == 0:
-        topics = get_topics_from_db(topic_id)
+        topics = database.get_topics_from_db(topic_id)
         if topics:
             topics_text = ""
             for topic_text, author in topics:
@@ -130,11 +34,11 @@ async def handle_odg(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else:
             await update.message.reply_text("Niente in programma, cara")
     elif context.args[0] == "reset":
-        reset_topics_in_db(topic_id)  # Reset dei topics nel database
+        database.reset_topics_in_db(topic_id)  # Reset dei topics nel database
         await update.message.reply_text("odg reset effettuato")
     else:
         topic_text = ' '.join(context.args)
-        add_topic_to_db(topic_id, author, topic_text)
+        database.add_topic_to_db(topic_id, author, topic_text)
         await update.message.reply_text(f"Aggiunto all'odg: {topic_text}")
 
 
@@ -148,21 +52,6 @@ async def get_chat_id_topic(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(f"Id della chat: {chat_id}, id del topic: {topic_id}")
 
 
-async def is_in_db(user_id):
-    conn = psycopg2.connect(DATABASE_URL)
-    cursor = conn.cursor()
-    cursor.execute("""
-        SELECT user_mail FROM ore WHERE user_id = %s
-    """, (user_id,))
-    mail = cursor.fetchall()
-    cursor.close()
-    conn.close()
-    if mail:
-        return True
-    else:
-        return False
-
-
 async def deep_linked_level_1(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     user_mail = ""
@@ -174,12 +63,12 @@ async def deep_linked_level_1(update: Update, context: ContextTypes.DEFAULT_TYPE
     else:
         await update.message.reply_text("Attenzione: utilizza il comando /ore altrimenti contatta lo staff IT")
         return
-    add_user_to_db(user_id, user_mail)
+    database.add_user_to_db(user_id, user_mail)
 
 
 async def ore(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.message.from_user.id
-    in_db = await is_in_db(user_id)
+    in_db = await database.is_in_db(user_id)
     if in_db is not True:
         url = "https://api.eagletrt.it/api/v2/tecsLinkOre"
         bot = context.bot
@@ -187,7 +76,7 @@ async def ore(update: Update, context: ContextTypes.DEFAULT_TYPE):
         text = f"Clicca su <a href='{url}'>questo link</a> per le ore"
         await update.message.reply_text(text, parse_mode=ParseMode.HTML)
         return
-    email = str(get_mail_from_id_db(user_id))
+    email = str(await database.get_mail_from_id_db(user_id))
     url = f"https://api.eagletrt.it/api/v2/oreLab?username={email}"
 
     response = requests.get(url)
@@ -221,8 +110,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 if __name__ == "__main__":
     def main():
-        create_table()
-        create_table_ore()
+        database.create_table()
+        database.create_table_ore()
 
         application = Application.builder().token(BOT_TOKEN).build()
         application.add_handler(CommandHandler("start", deep_linked_level_1))
