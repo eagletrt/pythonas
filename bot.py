@@ -1,4 +1,4 @@
-from database import *
+from database import db
 from telegram import Update, helpers
 from telegram.ext import Application, CommandHandler, ContextTypes
 import requests
@@ -25,7 +25,7 @@ async def handle_odg(update: Update, context: ContextTypes.DEFAULT_TYPE):
     author = update.message.from_user.full_name
 
     if len(context.args) == 0:
-        topics = database.get_topics_from_db(topic_id)
+        topics = db.get_topics_from_db(topic_id)
         if topics:
             topics_text = ""
             for topic_text, author in topics:
@@ -34,11 +34,11 @@ async def handle_odg(update: Update, context: ContextTypes.DEFAULT_TYPE):
         else:
             await update.message.reply_text("Niente in programma, cara")
     elif context.args[0] == "reset":
-        database.reset_topics_in_db(topic_id)  # Reset dei topics nel database
+        db.reset_topics_in_db(topic_id)  # Reset dei topics nel database
         await update.message.reply_text("odg reset effettuato")
     else:
         topic_text = ' '.join(context.args)
-        database.add_topic_to_db(topic_id, author, topic_text)
+        db.add_topic_to_db(topic_id, author, topic_text)
         await update.message.reply_text(f"Aggiunto all'odg: {topic_text}")
 
 
@@ -63,12 +63,12 @@ async def deep_linked_level_1(update: Update, context: ContextTypes.DEFAULT_TYPE
     else:
         await update.message.reply_text("Attenzione: utilizza il comando /ore altrimenti contatta lo staff IT")
         return
-    database.add_user_to_db(user_id, user_mail)
+    db.add_user_to_db(user_id, user_mail)
 
 
 async def ore(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = update.message.from_user.id
-    in_db = await database.is_in_db(user_id)
+    in_db = await db.is_in_db(user_id)
     if in_db is not True:
         url = "https://api.eagletrt.it/api/v2/tecsLinkOre"
         bot = context.bot
@@ -76,7 +76,7 @@ async def ore(update: Update, context: ContextTypes.DEFAULT_TYPE):
         text = f"Clicca su <a href='{url}'>questo link</a> per le ore"
         await update.message.reply_text(text, parse_mode=ParseMode.HTML)
         return
-    email = str(await database.get_mail_from_id_db(user_id))
+    email = str(await db.get_mail_from_id_db(user_id))
     url = f"https://api.eagletrt.it/api/v2/oreLab?username={email}"
 
     response = requests.get(url)
@@ -110,8 +110,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 if __name__ == "__main__":
     def main():
-        database.create_table()
-        database.create_table_ore()
+        db.create_table()
+        db.create_table_ore()
 
         application = Application.builder().token(BOT_TOKEN).build()
         application.add_handler(CommandHandler("start", deep_linked_level_1))
