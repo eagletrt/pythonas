@@ -1,4 +1,4 @@
-import database
+from database import *
 from telegram import Update, helpers
 from telegram.ext import Application, CommandHandler, ContextTypes
 import requests
