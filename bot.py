@@ -76,7 +76,7 @@ async def ore(update: Update, context: ContextTypes.DEFAULT_TYPE):
         text = f"Clicca su <a href='{url}'>questo link</a> per le ore"
         await update.message.reply_text(text, parse_mode=ParseMode.HTML)
         return
-    email = str(await db.get_mail_from_id_db(user_id))
+    email = str(db.get_mail_from_id_db(user_id))
     url = f"https://api.eagletrt.it/api/v2/oreLab?username={email}"
 
     response = requests.get(url)
