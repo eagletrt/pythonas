@@ -1,10 +1,8 @@
 from database import db
 from telegram import Update
 from telegram.ext import Application, CommandHandler, ContextTypes
-import requests
-from telegram.constants import ParseMode
 import os
-from commands import handle_odg, ore, start
+from commands import commands
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
@@ -43,10 +41,10 @@ if __name__ == "__main__":
 
         application = Application.builder().token(BOT_TOKEN).build()
         application.add_handler(CommandHandler("start", deep_linked_level_1))
-        application.add_handler(CommandHandler("odg", handle_odg))
+        application.add_handler(CommandHandler("odg", commands.handle_odg))
         application.add_handler(CommandHandler("chatid", get_chat_id_topic))
-        application.add_handler(CommandHandler("ore", ore))
-        application.add_handler(CommandHandler("start", start))
+        application.add_handler(CommandHandler("ore", commands.ore))
+        application.add_handler(CommandHandler("start", commands.start))
         application.run_polling()
 
     main()
