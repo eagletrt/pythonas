@@ -46,7 +46,7 @@ async def ore(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(text, parse_mode=ParseMode.HTML)
         return
     email = str(db.get_mail_from_id_db(user_id))
-    url = f"https://api.eagletrt.it/api/v2/oreLab?username={email}"
+    url = f"https://api.eagletrt.it/api/v2/lab/ore?username={email}"
 
     response = requests.get(url)
 
