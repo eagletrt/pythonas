@@ -11,11 +11,22 @@ async def handle_odg(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     try:
         # Verifica se 'message_thread_id' esiste, altrimenti usa 'chat.id'
-        topic_id = update.message.message_thread_id if update.message.message_thread_id else update.message.chat.id
+        if update.message is not None:
+            topic_id = (
+                update.message.message_thread_id
+                if update.message.message_thread_id is not None
+                else update.message.chat.id
+            )
+        else:
+            # Logga l'errore
+            print("Errore: 'update.message' è None")
+            return
+
     except AttributeError:
         # Logga l'errore o gestisci il caso in cui 'update.message' sia None
         print("Errore: 'update.message' è None")
-        await update.message.reply_text("Errore con l'id della chat attuale")
+    except Exception as e:
+        print(f"Errore: {e}")
 
     author = update.message.from_user.full_name
 
@@ -25,14 +36,16 @@ async def handle_odg(update: Update, context: ContextTypes.DEFAULT_TYPE):
             topics_text = ""
             for topic_text, author in topics:
                 topics_text += f"📋{topic_text}\n👤 {author}\n\n"
-            await update.message.reply_text("Contenuto Ordine Del Giorno:\n\n" + topics_text.strip())
+            await update.message.reply_text(
+                "Contenuto Ordine Del Giorno:\n\n" + topics_text.strip()
+            )
         else:
             await update.message.reply_text("Niente in programma, cara")
     elif context.args[0] == "reset":
         db.reset_topics_in_db(topic_id)  # Reset dei topics nel database
         await update.message.reply_text("odg reset effettuato")
     else:
-        topic_text = ' '.join(context.args)
+        topic_text = " ".join(context.args)
         db.add_topic_to_db(topic_id, author, topic_text)
         await update.message.reply_text(f"Aggiunto all'odg: {topic_text}")
 
@@ -56,22 +69,31 @@ async def ore(update: Update, context: ContextTypes.DEFAULT_TYPE):
         inlab = data.get("inlab")
         answer_text = ""
         if ore is None:
-            await update.message.reply_text("Errore, contatta lo staff IT.\n Codice errore: in ore function: ore is None")
+            await update.message.reply_text(
+                "Errore, contatta lo staff IT.\n Codice errore: in ore function: ore is None"
+            )
             return
         if inlab is False:
             answer_text = "Ciao! Non sei in lab 😿 \n"
         elif inlab is True:
             answer_text = "Ciao! Sei in lab 🐱\n"
         else:
-            await update.message.reply_text(f"Errore, contatta lo staff IT.\n Codice errore: in ore function: inlab is {inlab}")
+            await update.message.reply_text(
+                f"Errore, contatta lo staff IT.\n Codice errore: in ore function: inlab is {inlab}"
+            )
             print(inlab)
             return
         ore = utils.prettify_minutes(ore)
-        reply_ore = answer_text + f"Mi risulta che finora tu abbia trascorso {ore} nel laboratorio di E-Agle TRT questo mese"
+        reply_ore = (
+            answer_text
+            + f"Mi risulta che finora tu abbia trascorso {ore} nel laboratorio di E-Agle TRT questo mese"
+        )
         await update.message.reply_text(reply_ore)
     else:
         status_code = response.status_code
-        await update.message.reply_text(f"Errore, contatta lo staff IT.\n Codice errore: in ore function, response status code is {status_code}")
+        await update.message.reply_text(
+            f"Errore, contatta lo staff IT.\n Codice errore: in ore function, response status code is {status_code}"
+        )
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
